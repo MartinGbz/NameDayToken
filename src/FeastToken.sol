@@ -3,8 +3,6 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "forge-std/console.sol";
-
 contract FeastToken is ERC20 {
 
     uint256 internal constant initialSupply = 1000000 * 10 ** 18;
@@ -28,14 +26,10 @@ contract FeastToken is ERC20 {
 
         uint256 currentYear = january20BaseYear + yearsPassed;
 
-        console.log("currentYear : %d", currentYear);
-
         // doesn't take into account the current year because it's not finished yet
         for (uint256 i = january20BaseYear; i < currentYear; i++) {
-            console.log("i=%d", i);
             if (isLeap(i)) {
                 nextJanuary20Timestamp += dayInSeconds;
-                console.log("leap!");
             }
         }
  
@@ -53,18 +47,6 @@ contract FeastToken is ERC20 {
             return false;
         }
     }
-
-    // function isLeap(uint256 year) public pure returns (bool) {
-    //     if (year % 400 == 0) {
-    //         return true;
-    //     } else if (year % 100 == 0) {
-    //         return false;
-    //     } else if (year % 4 == 0) {
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
         require(_isTransferAllowed(), "Transfers are only allowed on 20th January of each year");
