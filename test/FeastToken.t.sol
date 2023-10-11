@@ -2,20 +2,21 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/SebCoin.sol";
+import "../src/FeastToken.sol";
 import "forge-std/console.sol";
 
-contract SebCoinTest is Test {
-    SebCoin public sebcoin;
+contract FeastTokenTest is Test {
+    FeastToken public sebcoin;
     address dapp = address(0x1);
     address alice = address(0x2);
 
     function setUp() public {
-        sebcoin = new SebCoin();
+        sebcoin = new FeastToken("sebcoin", "SEB");
     }
 
     function testName() public {
-        assertEq(sebcoin.name(), "Seb Coin");
+        console.log("name : %s", sebcoin.name());
+        assertEq(sebcoin.name(), "sebcoin");
         console.log("total supply : %e", sebcoin.totalSupply());
         assertEq(sebcoin.totalSupply(), 1e24);
 

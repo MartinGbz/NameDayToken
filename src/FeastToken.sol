@@ -4,10 +4,8 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "forge-std/console.sol";
 
-contract SebCoin is ERC20 {
+contract FeastToken is ERC20 {
 
-    string internal constant NAME = "Seb Coin";
-    string internal constant SYMBOL = "SEB";
     uint256 internal constant initialSupply = 1000000 * 10 ** 18;
 
     uint256 internal constant january20Timestamp = 1674172800; // Timestamp for 20th January 2023, 00:00:00 UTC
@@ -16,7 +14,8 @@ contract SebCoin is ERC20 {
     uint256 internal constant yearInSeconds = 31536000; // Number of seconds in a year (365 days)
     uint256 internal constant dayInSeconds = 86400; // Number of seconds in a day (24 hours)
 
-    constructor() ERC20(NAME, SYMBOL) {
+
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
         _mint(msg.sender, initialSupply);
     }
 
