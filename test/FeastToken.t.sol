@@ -19,9 +19,6 @@ contract FeastTokenTest is Test {
         assertEq(sebcoin.name(), "sebcoin");
         console.log("total supply : %e", sebcoin.totalSupply());
         assertEq(sebcoin.totalSupply(), 1e24);
-
-        console.log("hey");
-        
         console.log(block.timestamp);
     }
 
