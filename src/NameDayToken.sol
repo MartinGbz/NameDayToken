@@ -8,31 +8,37 @@ import "forge-std/console.sol";
 
 // import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "https://github.com/Arachnid/solidity-stringutils/strings.sol";
+import "@arachnid/contracts/strings.sol";
+// import "@arachnid/contracts/src/strings.sol";
 
 
 contract NameDayToken is ERC20 {
 
-    string internal dayName;
-    // uint256 internal nextDayTimestamp = 1000000 * 10 ** 18;
-    uint256 internal nameDayTimestamp = 1674172800; // Timestamp for 20th January 2023, 00:00:00 UTC
-    uint256 internal mintPerUserPerYear = 100;
-    // uint256 internal constant january20BaseYear = 2023;
-    uint256 internal constant january20BaseYear = 0;
-    uint256 internal constant yearInSeconds = 31536000; // Number of seconds in a year (365 days)
-    uint256 internal constant dayInSeconds = 86400; // Number of seconds in a day (24 hours)
+    using strings for *;
+    // using strings for string;
+    
+    string private _dayName;
+    // uint256 private nextDayTimestamp = 1000000 * 10 ** 18;
+    uint256 private _nameDayTimestamp = 1674172800; // Timestamp for 20th January 2023, 00:00:00 UTC
+    uint256 private _mintPerUserPerYear = 100;
+    uint256 private _maxSupply = 1e24;
+    // uint256 private constant BASE_YEAR = 2023;
+    uint256 private constant BASE_YEAR = 0;
+    uint256 private constant YEAR_IN_SECONDS = 31536000; // Number of seconds in a year (365 days)
+    uint256 private constant DAY_IN_SECONDS = 86400; // Number of seconds in a day (24 hours)
 
-    mapping(uint256 => mapping(string => bool)) internal minted;
+    mapping(uint256 => mapping(string => bool)) private minted;
 
-    // uint256 internal constant mintPerUserPerDay = 1;
-    // uint256 internal constant name = 1;
+    // uint256 private constant mintPerUserPerDay = 1;
+    // uint256 private constant name = 1;
 
-    constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 nextDayTimestamp_) ERC20(name_, symbol_) {
-        nameDayTimestamp = nameDayTimestamp_;
-        mintPerUserPerYear = mintPerUserPerYear_;
-        dayName = dayName_;
+    constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
+        _nameDayTimestamp = nameDayTimestamp_;
+        _mintPerUserPerYear = mintPerUserPerYear_;
+        _dayName = dayName_;
+        _maxSupply = maxSupply_;
         // nextDayTimestamp = nextDayTimestamp_;
-        _mint(msg.sender, nextDayTimestamp_);
+        // _mint(msg.sender, nextDayTimestamp_);
 
         // bytes32 namehash = computeNamehash("martingbz");
         // console.log("namehash :");
@@ -55,36 +61,44 @@ contract NameDayToken is ERC20 {
         return resolver.addr(node);
     }
 
-    function _isTransferAllowed() internal view returns (bool) {
+    function _isRightDay() private view returns (bool) {
         uint256 currentTime = block.timestamp;
-        uint256 yearsPassed = (currentTime - nameDayTimestamp) / yearInSeconds;
-        // if not in january 20 => nextDayTimestamp=nameDayTimestamp
-        // if in january 20 => nextDayTimestamp=nameDayTimestamp+yearsPassed*yearInSeconds
-        uint256 nextDayTimestamp = nameDayTimestamp + yearsPassed * yearInSeconds;
+        uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
+        // if not in january 20 => nextDayTimestamp=_nameDayTimestamp
+        // if in january 20 => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
+        uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
 
-        uint256 currentYear = january20BaseYear + yearsPassed;
+        uint256 currentYear = BASE_YEAR + yearsPassed;
 
         
 
         // add the number of leap days
         // doesn't take into account the current year because it's not finished yet
-        for (uint256 i = january20BaseYear; i < currentYear; i++) {
+        for (uint256 i = BASE_YEAR; i < currentYear; i++) {
             if (isLeap(i)) {
-                nextDayTimestamp += dayInSeconds;
+                nextDayTimestamp += DAY_IN_SECONDS;
             }
         }
  
-        return (currentTime >= nextDayTimestamp && currentTime < nextDayTimestamp+dayInSeconds);
+        return (currentTime >= nextDayTimestamp && currentTime < nextDayTimestamp+DAY_IN_SECONDS);
     }
 
-    // function getTimes() internal view returns (uint256, uint256, uint256) {
-    //     uint256 currentTime = block.timestamp;
-    //     uint256 yearsPassed = (currentTime - nameDayTimestamp) / yearInSeconds;
-    //     // if not in january 20 => nextDayTimestamp=nameDayTimestamp
-    //     // if in january 20 => nextDayTimestamp=nameDayTimestamp+yearsPassed*yearInSeconds
-    //     uint256 nextDayTimestamp = nameDayTimestamp + yearsPassed * yearInSeconds;
+    function _isMaxSupplyReach(uint256 amount) private view returns (bool) {
+        return totalSupply()+amount <= _maxSupply;
+    }
 
-    //     uint256 currentYear = january20BaseYear + yearsPassed;
+    // function _isTransferAllowed(uint256 amount) private view returns (bool) {
+    //     return _isMaxSupplyReach(amount) && _isRightDay();
+    // }
+
+    // function getTimes() private view returns (uint256, uint256, uint256) {
+    //     uint256 currentTime = block.timestamp;
+    //     uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
+    //     // if not in january 20 => nextDayTimestamp=_nameDayTimestamp
+    //     // if in january 20 => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
+    //     uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
+
+    //     uint256 currentYear = BASE_YEAR + yearsPassed;
     //     return (currentTime, nextDayTimestamp, currentYear);
     // }
 
@@ -101,17 +115,21 @@ contract NameDayToken is ERC20 {
     }
 
     function transfer(address recipient, uint256 amount) public override returns (bool) {
-        require(_isTransferAllowed(), "Transfers are only allowed on 20th January of each year");
+        require(_isMaxSupplyReach(amount), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on 20th January of each year");
         return super.transfer(recipient, amount);
     }
 
-    function _isMintAllowed (string memory ensName) internal view returns (bool) {
+    function _isMintAllowed (string memory ensName) private view returns (bool) {
         // ensName starts with _name and ends with .eth
-        require(ensName.endsWith(".eth"), "ENS name not valid");
-        require(ensName.contains(dayName), "Only an owner of an ENS name that contains "+ dayName +" can mint tokens");
+        // console.log("ensName len: %s", ensName.len());
+        // len("test");
+        require(ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid");
+        require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat("can mint tokens".toSlice()));
 
         // Check si il a pas déjà mint ce jour
-        require(minted(getCurrentYear(), ensName) == false, "You already minted tokens this year");
+        // require(minted(getCurrentYear(), ensName) == false, "You already minted tokens this year");
+        require(!minted[getCurrentYear()][ensName], "You already minted tokens this year");
 
         bytes32 namehash = computeNamehash(ensName);
         address ensResolved = resolve(namehash);
@@ -120,10 +138,11 @@ contract NameDayToken is ERC20 {
     }
 
     function mint (string memory ensName) public {
-        require(_isTransferAllowed(), "Transfers are only allowed on 20th January of each year");
+        require(_isMaxSupplyReach(_mintPerUserPerYear), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on 20th January of each year");
         require(_isMintAllowed(ensName), "Only the owner of the ENS name can mint tokens");
-        _mint(msg.sender, mintPerUserPerYear);
-        minted(getCurrentYear(), ensName) = true;
+        _mint(msg.sender, _mintPerUserPerYear);
+        minted[getCurrentYear()][ensName] = true;
     }
 
     // computeNamehash for ENS (function not recursive - subdomains are not supported)
@@ -137,9 +156,9 @@ contract NameDayToken is ERC20 {
         );
     }
 
-    function getCurrentYear() internal returns (uint256) {
-        uint256 yearsPassed = (block.timestamp - nameDayTimestamp) / yearInSeconds;
-        return january20BaseYear + yearsPassed;
+    function getCurrentYear() private view returns (uint256) {
+        uint256 yearsPassed = (block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS;
+        return BASE_YEAR + yearsPassed;
     }
 }
 
