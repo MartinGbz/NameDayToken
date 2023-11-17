@@ -11,6 +11,8 @@ import "forge-std/console.sol";
 import "@arachnid/contracts/strings.sol";
 // import "@arachnid/contracts/src/strings.sol";
 
+import "forge-std/console.sol";
+
 
 contract NameDayToken is ERC20 {
 
@@ -29,8 +31,7 @@ contract NameDayToken is ERC20 {
 
     mapping(uint256 => mapping(string => bool)) private minted;
 
-    // uint256 private constant mintPerUserPerDay = 1;
-    // uint256 private constant name = 1;
+    event Log(string message);
 
     constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
         _nameDayTimestamp = nameDayTimestamp_;
@@ -58,7 +59,10 @@ contract NameDayToken is ERC20 {
 
     function resolve(bytes32 node) public view returns(address) {
         Resolver resolver = ens.resolver(node);
-        return resolver.addr(node);
+        require(address(resolver) != address(0), "Resolver has not been found");
+        address ensName = resolver.addr(node);
+        require(address(resolver) != address(0), "Address can't be resolved");
+        return ensName;
     }
 
     function _isRightDay() private view returns (bool) {
@@ -120,12 +124,11 @@ contract NameDayToken is ERC20 {
         return super.transfer(recipient, amount);
     }
 
-    function _isMintAllowed (string memory ensName) private view returns (bool) {
+    function _isUserAllowed (string memory ensName) private view returns (bool) {
         // ensName starts with _name and ends with .eth
-        // console.log("ensName len: %s", ensName.len());
-        // len("test");
-        require(ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid");
-        require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat("can mint tokens".toSlice()));
+        
+        require(!ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
+        require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
 
         // Check si il a pas déjà mint ce jour
         // require(minted(getCurrentYear(), ensName) == false, "You already minted tokens this year");
@@ -133,26 +136,55 @@ contract NameDayToken is ERC20 {
 
         bytes32 namehash = computeNamehash(ensName);
         address ensResolved = resolve(namehash);
+
+        // Resolver resolver = getResolver(namehash);
+        // address ensResolved = resolveName(resolver, namehash);
+
         require(ensResolved == msg.sender, "Only the owner of the ENS name can mint tokens");
         return true;
     }
 
+    // function getResolver(bytes32 namehash) public view returns (Resolver resolver) {
+    //     try ens.resolver(namehash) returns (Resolver result) {
+    //         resolver = result;
+    //          console.log('no error 1');
+    //          console.log(result == address(0));
+    //         // emit Log(result);
+    //     } catch {
+    //         console.log('error catch 1');
+    //         // ensResolved = address(0);
+    //         revert("Issue with ENS resolution 1");
+    //     }
+    // }
+
+    // function resolveName(Resolver resolver, bytes32 namehash) public view returns (address ensResolved) {
+    //     try resolver.addr(namehash) returns (address result) {
+    //         ensResolved = result;
+    //         console.log('no error 2');
+    //         // emit Log(result);
+    //     } catch {
+    //         console.log('error catch 2');
+    //         // ensResolved = address(0);
+    //         revert("Issue with ENS resolution 2");
+    //     }
+    // }
+
     function mint (string memory ensName) public {
         require(_isMaxSupplyReach(_mintPerUserPerYear), "Max supply reached");
-        require(_isRightDay(), "Transfers are only allowed on 20th January of each year");
-        require(_isMintAllowed(ensName), "Only the owner of the ENS name can mint tokens");
+        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+        require(_isUserAllowed(ensName), "Only the owner of the ENS name can mint tokens");
         _mint(msg.sender, _mintPerUserPerYear);
         minted[getCurrentYear()][ensName] = true;
     }
 
     // computeNamehash for ENS (function not recursive - subdomains are not supported)
-    function computeNamehash(string memory _name) public pure returns (bytes32 namehash) {
+    function computeNamehash(string memory name_) public pure returns (bytes32 namehash) {
         namehash = 0x0000000000000000000000000000000000000000000000000000000000000000;
         namehash = keccak256(
         abi.encodePacked(namehash, keccak256(abi.encodePacked('eth')))
         );
         namehash = keccak256(
-        abi.encodePacked(namehash, keccak256(abi.encodePacked(_name)))
+        abi.encodePacked(namehash, keccak256(abi.encodePacked(name_)))
         );
     }
 
