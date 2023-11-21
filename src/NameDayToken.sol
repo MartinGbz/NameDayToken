@@ -4,12 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "forge-std/console.sol";
 
-// import 'ens-namehash/contracts/ENSNamehash.sol';
-
-// import "@openzeppelin/contracts/utils/Strings.sol";
-
 import "@arachnid/contracts/strings.sol";
-// import "@arachnid/contracts/src/strings.sol";
 
 import "forge-std/console.sol";
 
@@ -17,14 +12,11 @@ import "forge-std/console.sol";
 contract NameDayToken is ERC20 {
 
     using strings for *;
-    // using strings for string;
     
     string private _dayName;
-    // uint256 private nextDayTimestamp = 1000000 * 10 ** 18;
-    uint256 private _nameDayTimestamp = 1674172800; // Timestamp for 20th January 2023, 00:00:00 UTC
-    uint256 private _mintPerUserPerYear = 100;
-    uint256 private _maxSupply = 1e24;
-    // uint256 private constant BASE_YEAR = 2023;
+    uint256 private _nameDayTimestamp; // Timestamp for 20th January 2023, 00:00:00 UTC
+    uint256 private _mintPerUserPerYear;
+    uint256 private _maxSupply;
     uint256 private constant BASE_YEAR = 0;
     uint256 private constant YEAR_IN_SECONDS = 31536000; // Number of seconds in a year (365 days)
     uint256 private constant DAY_IN_SECONDS = 86400; // Number of seconds in a day (24 hours)
@@ -38,20 +30,6 @@ contract NameDayToken is ERC20 {
         _mintPerUserPerYear = mintPerUserPerYear_;
         _dayName = dayName_;
         _maxSupply = maxSupply_;
-        // nextDayTimestamp = nextDayTimestamp_;
-        // _mint(msg.sender, nextDayTimestamp_);
-
-        // bytes32 namehash = computeNamehash("martingbz");
-        // console.log("namehash :");
-        // console.logBytes32(namehash);
-        // address ensResolved = resolve(namehash);
-
-        // address ensResolved = resolve(0x1d4589635bb608ca7364f7a6c6b8df715726202b08df62322b7366c2bcc93826);
-        
-        // bytes name = bytes("martingbz.eth");
-        // address ens = resolve( name.namehash());
-
-        // console.log("ens : %s", ensResolved);
     }
 
     // Same address for Mainnet, Ropsten, Rinkerby, Gorli and other networks;
@@ -68,13 +46,11 @@ contract NameDayToken is ERC20 {
     function _isRightDay() private view returns (bool) {
         uint256 currentTime = block.timestamp;
         uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
-        // if not in january 20 => nextDayTimestamp=_nameDayTimestamp
-        // if in january 20 => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
+        // if not in date => nextDayTimestamp=_nameDayTimestamp
+        // if in date => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
         uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
 
         uint256 currentYear = BASE_YEAR + yearsPassed;
-
-        
 
         // add the number of leap days
         // doesn't take into account the current year because it's not finished yet
@@ -88,23 +64,8 @@ contract NameDayToken is ERC20 {
     }
 
     function _isMaxSupplyReach(uint256 amount) private view returns (bool) {
-        return totalSupply()+amount <= _maxSupply;
+        return totalSupply() + amount <= _maxSupply;
     }
-
-    // function _isTransferAllowed(uint256 amount) private view returns (bool) {
-    //     return _isMaxSupplyReach(amount) && _isRightDay();
-    // }
-
-    // function getTimes() private view returns (uint256, uint256, uint256) {
-    //     uint256 currentTime = block.timestamp;
-    //     uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
-    //     // if not in january 20 => nextDayTimestamp=_nameDayTimestamp
-    //     // if in january 20 => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
-    //     uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
-
-    //     uint256 currentYear = BASE_YEAR + yearsPassed;
-    //     return (currentTime, nextDayTimestamp, currentYear);
-    // }
 
     function isLeap(uint256 year) public pure returns (bool) {
         if (year % 4 != 0) {
@@ -118,30 +79,33 @@ contract NameDayToken is ERC20 {
         }
     }
 
-    function transfer(address recipient, uint256 amount) public override returns (bool) {
-        require(_isMaxSupplyReach(amount), "Max supply reached");
-        require(_isRightDay(), "Transfers are only allowed on 20th January of each year");
-        return super.transfer(recipient, amount);
+    function transfer(address to, uint256 value) public override returns (bool) {
+        require(_isMaxSupplyReach(value), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+        return super.transfer(to, value);
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        require(_isMaxSupplyReach(value), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+        return super.transferFrom(from, to, value);
     }
 
     function _isUserAllowed (string memory ensName) private view returns (bool) {
-        // ensName starts with _name and ends with .eth
-        
         require(!ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
         require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
-
-        // Check si il a pas déjà mint ce jour
-        // require(minted(getCurrentYear(), ensName) == false, "You already minted tokens this year");
         require(!minted[getCurrentYear()][ensName], "You already minted tokens this year");
 
         bytes32 namehash = computeNamehash(ensName);
         address ensResolved = resolve(namehash);
-
-        // Resolver resolver = getResolver(namehash);
-        // address ensResolved = resolveName(resolver, namehash);
-
-        require(ensResolved == msg.sender, "Only the owner of the ENS name can mint tokens");
-        return true;
+        if(ensResolved == msg.sender) {
+            return true;
+        } 
+        else {
+            return false;
+        }
+        // require(ensResolved == msg.sender, "Only the owner of the ENS name can mint tokens");
+        // return true;
     }
 
     // function getResolver(bytes32 namehash) public view returns (Resolver resolver) {
