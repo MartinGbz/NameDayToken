@@ -61,7 +61,7 @@ contract NameDayToken is ERC20 {
     }
 
     function _isUserAllowed (string memory ensName) private view returns (bool) {
-        require(!ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
+        require(!ensName.toSlice().startsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
         require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
         require(!minted[getCurrentYear()][ensName], "You already minted tokens this year");
 
