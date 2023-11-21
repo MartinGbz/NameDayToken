@@ -24,7 +24,7 @@ contract NameDayToken is ERC20 {
     uint256 private constant YEAR_IN_SECONDS = 31536000; // Number of seconds in a year (365 days)
     uint256 private constant DAY_IN_SECONDS = 86400; // Number of seconds in a day (24 hours)
 
-    mapping(uint256 => mapping(string => bool)) private minted;
+    mapping(uint256 => mapping(string => bool)) private _minted;
 
     constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
         _nameDayTimestamp = nameDayTimestamp_;
@@ -55,7 +55,7 @@ contract NameDayToken is ERC20 {
         );
     }
 
-    function getCurrentYear() private view returns (uint256) {
+    function _getCurrentYear() private view returns (uint256) {
         uint256 yearsPassed = (block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS;
         return BASE_YEAR + yearsPassed;
     }
@@ -63,7 +63,7 @@ contract NameDayToken is ERC20 {
     function _isUserAllowed (string memory ensName) private view returns (bool) {
         require(!ensName.toSlice().startsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
         require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
-        require(!minted[getCurrentYear()][ensName], "You already minted tokens this year");
+        require(!_minted[_getCurrentYear()][ensName], "You already minted tokens this year");
 
         bytes32 namehash = computeNamehash(ensName);
         address ensResolved = resolve(namehash);
@@ -128,6 +128,6 @@ contract NameDayToken is ERC20 {
         require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
         require(_isUserAllowed(ensName), "Only the owner of the ENS name can mint tokens");
         _mint(msg.sender, _mintPerUserPerYear);
-        minted[getCurrentYear()][ensName] = true;
+        _minted[_getCurrentYear()][ensName] = true;
     }
 }
