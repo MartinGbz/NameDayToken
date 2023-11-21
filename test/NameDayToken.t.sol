@@ -25,8 +25,11 @@ contract NameDayTokenTest is Test {
         assertEq(aliceToken.totalSupply(), 0);
     }
 
+    // /!\ Tests can fail because:
+    // - if owners of alice*.eth remove resolving address, the test will fail
+    // - if the alice*.eth owner changes, the test will fail too
+
     /*---------- MINT TESTS ----------*/
-    // mint tests can fail because if owners of alice*.eth remove resolving address, the test will fail
 
     function testMintSuccess() public {
         // vm.warp(1702684800);
@@ -144,55 +147,11 @@ contract NameDayTokenTest is Test {
 
         // 10/04/2024 : 15am
         vm.warp(1712761200);
-
-        console.log("BEFORE");
         aliceToken.approve(martingbz, 50); // should not revert
-        console.log("AFTER");
 
         vm.startPrank(martingbz);
         vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
         aliceToken.transferFrom(alice, martingbz, 50);
     }
-
-    // function testName() public {
-    //     console.log("name : %s", sebcoin.name());
-    //     assertEq(sebcoin.name(), "sebcoin");
-        
-    //     console.log("total supply : %e", sebcoin.totalSupply());
-    //     assertEq(sebcoin.totalSupply(), 1e24);
-
-    //     console.log(block.timestamp);
-    // }
-
-    // function testApprove() public {
-    //     vm.startPrank(alice);
-    //     assertTrue(aliceToken.approve(dapp, 100));
-    //     assertEq(aliceToken.allowance(address(this), dapp), 100);
-    // }
-
-    // function testSend() public {
-    //     assertTrue(sebcoin.transfer(alice, 100));
-    //     console.log("alice : %e", sebcoin.balanceOf(alice));
-    //     assertEq(sebcoin.balanceOf(alice), 1e2);
-    //     assertEq(sebcoin.balanceOf(address(this)), 1e24 - 1e2);
-    // }
-
-    // function testApproveAndSend() public {
-    //     assertTrue(sebcoin.transfer(alice, 100));
-    //     vm.startPrank(alice);
-    //     console.log("1: alice : %e", sebcoin.balanceOf(alice));
-    //     assertTrue(sebcoin.approve(dapp, 1e2));
-    //     vm.stopPrank();
-    //     vm.startPrank(dapp);
-    //     assertTrue(sebcoin.transferFrom(alice, dapp, 1e2));
-    //     console.log("2: dapp : %e", sebcoin.balanceOf(dapp));
-    //     vm.stopPrank();
-    //     console.log("this : %e", sebcoin.balanceOf(address(this)));
-    //     console.log("dapp : %e", sebcoin.balanceOf(dapp));
-    //     console.log("alice : %e", sebcoin.balanceOf(alice));
-    //     assertEq(sebcoin.balanceOf(address(this)), 1e24 - 1e2);
-    //     assertEq(sebcoin.balanceOf(dapp), 1e2);
-    //     assertEq(sebcoin.balanceOf(alice), 0);
-    // }
 }
 

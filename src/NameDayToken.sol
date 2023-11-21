@@ -2,12 +2,15 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "forge-std/console.sol";
-
 import "@arachnid/contracts/strings.sol";
 
-import "forge-std/console.sol";
+abstract contract ENS {
+    function resolver(bytes32 node) public virtual view returns (Resolver);
+}
 
+abstract contract Resolver {
+    function addr(bytes32 node) public virtual view returns (address);
+}
 
 contract NameDayToken is ERC20 {
 
@@ -22,8 +25,6 @@ contract NameDayToken is ERC20 {
     uint256 private constant DAY_IN_SECONDS = 86400; // Number of seconds in a day (24 hours)
 
     mapping(uint256 => mapping(string => bool)) private minted;
-
-    event Log(string message);
 
     constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
         _nameDayTimestamp = nameDayTimestamp_;
@@ -43,104 +44,6 @@ contract NameDayToken is ERC20 {
         return ensName;
     }
 
-    function _isRightDay() private view returns (bool) {
-        uint256 currentTime = block.timestamp;
-        uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
-        // if not in date => nextDayTimestamp=_nameDayTimestamp
-        // if in date => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
-        uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
-
-        uint256 currentYear = BASE_YEAR + yearsPassed;
-
-        // add the number of leap days
-        // doesn't take into account the current year because it's not finished yet
-        for (uint256 i = BASE_YEAR; i < currentYear; i++) {
-            if (isLeap(i)) {
-                nextDayTimestamp += DAY_IN_SECONDS;
-            }
-        }
- 
-        return (currentTime >= nextDayTimestamp && currentTime < nextDayTimestamp+DAY_IN_SECONDS);
-    }
-
-    function _isMaxSupplyReach(uint256 amount) private view returns (bool) {
-        return totalSupply() + amount <= _maxSupply;
-    }
-
-    function isLeap(uint256 year) public pure returns (bool) {
-        if (year % 4 != 0) {
-            return false;
-        } else if (year % 100 != 0) {
-            return true;
-        } else if (year % 400 == 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function transfer(address to, uint256 value) public override returns (bool) {
-        require(_isMaxSupplyReach(value), "Max supply reached");
-        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
-        return super.transfer(to, value);
-    }
-
-    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
-        require(_isMaxSupplyReach(value), "Max supply reached");
-        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
-        return super.transferFrom(from, to, value);
-    }
-
-    function _isUserAllowed (string memory ensName) private view returns (bool) {
-        require(!ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
-        require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
-        require(!minted[getCurrentYear()][ensName], "You already minted tokens this year");
-
-        bytes32 namehash = computeNamehash(ensName);
-        address ensResolved = resolve(namehash);
-        if(ensResolved == msg.sender) {
-            return true;
-        } 
-        else {
-            return false;
-        }
-        // require(ensResolved == msg.sender, "Only the owner of the ENS name can mint tokens");
-        // return true;
-    }
-
-    // function getResolver(bytes32 namehash) public view returns (Resolver resolver) {
-    //     try ens.resolver(namehash) returns (Resolver result) {
-    //         resolver = result;
-    //          console.log('no error 1');
-    //          console.log(result == address(0));
-    //         // emit Log(result);
-    //     } catch {
-    //         console.log('error catch 1');
-    //         // ensResolved = address(0);
-    //         revert("Issue with ENS resolution 1");
-    //     }
-    // }
-
-    // function resolveName(Resolver resolver, bytes32 namehash) public view returns (address ensResolved) {
-    //     try resolver.addr(namehash) returns (address result) {
-    //         ensResolved = result;
-    //         console.log('no error 2');
-    //         // emit Log(result);
-    //     } catch {
-    //         console.log('error catch 2');
-    //         // ensResolved = address(0);
-    //         revert("Issue with ENS resolution 2");
-    //     }
-    // }
-
-    function mint (string memory ensName) public {
-        require(_isMaxSupplyReach(_mintPerUserPerYear), "Max supply reached");
-        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
-        require(_isUserAllowed(ensName), "Only the owner of the ENS name can mint tokens");
-        _mint(msg.sender, _mintPerUserPerYear);
-        minted[getCurrentYear()][ensName] = true;
-    }
-
     // computeNamehash for ENS (function not recursive - subdomains are not supported)
     function computeNamehash(string memory name_) public pure returns (bytes32 namehash) {
         namehash = 0x0000000000000000000000000000000000000000000000000000000000000000;
@@ -156,12 +59,75 @@ contract NameDayToken is ERC20 {
         uint256 yearsPassed = (block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS;
         return BASE_YEAR + yearsPassed;
     }
-}
 
-abstract contract ENS {
-    function resolver(bytes32 node) public virtual view returns (Resolver);
-}
+    function _isUserAllowed (string memory ensName) private view returns (bool) {
+        require(!ensName.toSlice().endsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
+        require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
+        require(!minted[getCurrentYear()][ensName], "You already minted tokens this year");
 
-abstract contract Resolver {
-    function addr(bytes32 node) public virtual view returns (address);
+        bytes32 namehash = computeNamehash(ensName);
+        address ensResolved = resolve(namehash);
+        if(ensResolved == msg.sender) {
+            return true;
+        } 
+        else {
+            return false;
+        }
+    }
+
+    function _isLeap(uint256 year) private pure returns (bool) {
+        if (year % 4 != 0) {
+            return false;
+        } else if (year % 100 != 0) {
+            return true;
+        } else if (year % 400 == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function _isRightDay() private view returns (bool) {
+        uint256 currentTime = block.timestamp;
+        uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
+        // if not in date => nextDayTimestamp=_nameDayTimestamp
+        // if in date => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
+        uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
+
+        uint256 currentYear = BASE_YEAR + yearsPassed;
+
+        // add leap days
+        // doesn't take into account the current year because it's not finished yet
+        for (uint256 i = BASE_YEAR; i < currentYear; i++) {
+            if (_isLeap(i)) {
+                nextDayTimestamp += DAY_IN_SECONDS;
+            }
+        }
+ 
+        return (currentTime >= nextDayTimestamp && currentTime < nextDayTimestamp+DAY_IN_SECONDS);
+    }
+
+    function _isMaxSupplyReach(uint256 amount) private view returns (bool) {
+        return totalSupply() + amount <= _maxSupply;
+    }
+
+    function transfer(address to, uint256 value) public override returns (bool) {
+        require(_isMaxSupplyReach(value), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+        return super.transfer(to, value);
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+        require(_isMaxSupplyReach(value), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+        return super.transferFrom(from, to, value);
+    }
+
+    function mint (string memory ensName) public {
+        require(_isMaxSupplyReach(_mintPerUserPerYear), "Max supply reached");
+        require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+        require(_isUserAllowed(ensName), "Only the owner of the ENS name can mint tokens");
+        _mint(msg.sender, _mintPerUserPerYear);
+        minted[getCurrentYear()][ensName] = true;
+    }
 }

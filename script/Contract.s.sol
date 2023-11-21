@@ -5,14 +5,13 @@ import "forge-std/Script.sol";
 import {NameDayToken} from "../src/NameDayToken.sol";
 
 contract ContractScript is Script {
-    NameDayToken public sebcoin;
+    NameDayToken public aliceToken;
 
     function setUp() public {}
 
     function run() public {
         vm.startBroadcast();
-        sebcoin = new NameDayToken("sebcoin", "SEB", "seb", 1674172800, 100, 1e24);
-        // sebcoin.transfer(0x70997970C51812dc3A010C7d01b50e0d17dc79C8, 100);
+        aliceToken = new NameDayToken("AliceToken", "ALICE", "alice", 1702684800, 100, 100000);
         vm.stopBroadcast();
     }
 }
