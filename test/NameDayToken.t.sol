@@ -99,15 +99,6 @@ contract NameDayTokenTest is Test {
         aliceToken.mint("alice");
     }
 
-    // TODO: test edges cases
-    // - leap years => ok
-    // v => would be better to do fuzz testing
-    // - last day of the year
-    //      31/12/2023
-    // - first day of the year
-    //      1/1/2024
-    
-
     /*---------- TRANSFERT TESTS ----------*/
 
     function testMintAndTransferSuccess() public {
@@ -154,4 +145,3 @@ contract NameDayTokenTest is Test {
         aliceToken.transferFrom(alice, martingbz, 50);
     }
 }
-

@@ -75,7 +75,7 @@ contract NameDayToken is ERC20 {
         }
     }
 
-    function _isLeap(uint256 year) private pure returns (bool) {
+    function isLeap(uint256 year) public pure returns (bool) {
         if (year % 4 != 0) {
             return false;
         } else if (year % 100 != 0) {
@@ -99,7 +99,7 @@ contract NameDayToken is ERC20 {
         // add leap days
         // doesn't take into account the current year because it's not finished yet
         for (uint256 i = BASE_YEAR; i < currentYear; i++) {
-            if (_isLeap(i)) {
+            if (isLeap(i)) {
                 nextDayTimestamp += DAY_IN_SECONDS;
             }
         }
