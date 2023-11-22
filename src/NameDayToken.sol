@@ -33,6 +33,22 @@ contract NameDayToken is ERC20 {
         _maxSupply = maxSupply_;
     }
 
+    function dayName() public view virtual returns (string memory) {
+        return _dayName;
+    }
+
+    function nameDayTimestamp() public view virtual returns (uint256) {
+        return _nameDayTimestamp;
+    }
+
+    function mintPerUserPerYear() public view virtual returns (uint256) {
+        return _mintPerUserPerYear;
+    }
+
+    function maxSupply() public view virtual returns (uint256) {
+        return _maxSupply;
+    }
+
     // Same address for Mainnet, Ropsten, Rinkerby, Gorli and other networks;
     ENS ens = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
 
