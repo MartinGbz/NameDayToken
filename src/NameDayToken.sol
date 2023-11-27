@@ -92,7 +92,7 @@ contract NameDayToken is ERC20 {
         }
     }
 
-    function getNextNameDayTimestamp() public view returns (uint256) {
+    function getCurrentYearNameDayTimestamp() public view returns (uint256) {
         uint256 currentYear = DateTime.getYear(block.timestamp);
         (, uint month, uint day, uint hour, uint minute, uint second) = DateTime.timestampToDateTime
         (_nameDayTimestamp);
@@ -100,7 +100,7 @@ contract NameDayToken is ERC20 {
     }
 
     function _isRightDay() private view returns (bool) {
-        uint256 nextNameDayTimestamp = getNextNameDayTimestamp();
+        uint256 nextNameDayTimestamp = getCurrentYearNameDayTimestamp();
         
         // nextNameDayTimestamp + DAY_IN_SECONDS can overflow if the nextNameDayTimestamp it's > MAX_INT
         return (block.timestamp >= nextNameDayTimestamp && block.timestamp < nextNameDayTimestamp + DAY_IN_SECONDS);
