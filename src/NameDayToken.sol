@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@arachnid/contracts/strings.sol";
 import "@rollaProject/DateTime.sol";
-import "forge-std/console.sol";
 
 abstract contract ENS {
     function resolver(bytes32 node) public virtual view returns (Resolver);
@@ -29,34 +28,11 @@ contract NameDayToken is ERC20 {
     mapping(uint256 => mapping(string => bool)) private _minted;
 
     constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
-        // require(nameDayTimestamp_ + DAY_IN_SECONDS > nameDayTimestamp_, "Potential overflows");
-
         _nameDayTimestamp = nameDayTimestamp_;
         _mintPerUserPerYear = mintPerUserPerYear_;
         _dayName = dayName_;
         _maxSupply = maxSupply_;
         _baseYear = uint256(DateTime.getYear(block.timestamp));
-
-        console.log("_baseYear");
-        console.log(_baseYear);
-
-        // if (nextNameDayTimestamp == MAX_INT_TYPE) {
-        //     // nextNameDayTimestamp est déjà au maximum, pas besoin d'ajouter DAY_IN_SECONDS
-        // } else {
-        //     // Vérifier si l'addition dépassera MAX_INT_TYPE
-        //     uint256 remainingTime = MAX_INT_TYPE - nextNameDayTimestamp;
-        //     if (remainingTime >= DAY_IN_SECONDS) {
-        //         nextNameDayTimestamp += DAY_IN_SECONDS;
-        //     } else {
-        //         // Si l'addition dépasse MAX_INT_TYPE, tu peux choisir une autre action appropriée ici
-        //         // Par exemple, tu peux définir nextNameDayTimestamp sur MAX_INT_TYPE pour représenter une date indéterminée.
-        //         nextNameDayTimestamp = MAX_INT_TYPE;
-        //     }
-        // }
-
-        // uint test = DateTime.getYear(115792089237316195423570985008687907853269984665640564039457584007913125369600);
-        // console.log("test");
-        // console.log(test);
     }
 
     function dayName() public view virtual returns (string memory) {
@@ -126,23 +102,9 @@ contract NameDayToken is ERC20 {
         uint256 currentYear = DateTime.getYear(block.timestamp);
         (, uint month, uint day) = DateTime.timestampToDate(_nameDayTimestamp);
         uint256 nextNameDayTimestamp = DateTime.timestampFromDate(currentYear, month, day);
-
-        console.log("mint5");
-
-        console.log(nextNameDayTimestamp);
-        console.log(currentTime);
-        console.log(currentYear);
-        
-        console.log("test + DAY_IN_SECONDS");
-        // uint256 test = nextNameDayTimestamp + DAY_IN_SECONDS;
-        // console.log(test);
-        // uint256 MAX_INT_TYPE = 2**256 - 1; 
-
-        // if(nextNameDayTimestamp + DAY_IN_SECONDS >= MAX_INT_TYPE) {
-        //     nextNameDayTimestamp = MAX_INT_TYPE;
-        // }
  
-        return (currentTime >= nextNameDayTimestamp && currentTime < nextNameDayTimestamp+DAY_IN_SECONDS);
+        // nextNameDayTimestamp + DAY_IN_SECONDS can overflow if the nextNameDayTimestamp is > MAX_INT - DAY_IN_SECONDS
+        return (currentTime >= nextNameDayTimestamp && currentTime < nextNameDayTimestamp + DAY_IN_SECONDS);
     }
 
     function _isMaxSupplyReach(uint256 amount) private view returns (bool) {

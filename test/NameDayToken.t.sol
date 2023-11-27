@@ -7,10 +7,14 @@ import "forge-std/console.sol";
 
 contract NameDayTokenTest is Test {
     NameDayToken public aliceToken;
+
     address alice = address(0xcd2E72aEBe2A203b84f46DEEC948E6465dB51c75);
     address alice1 = address(0x3f125f040a5AA108C8E136c5d671895e533742E9);
     address alicecooper = address(0xa54fb799525Ac436F8bf3d88b3FA241A4e9e2599);
     address martingbz = address(0x4801eB5a2A6E2D04F019098364878c70a05158F1);
+
+    uint256 DAY_IN_SECONDS = 24 * 60 * 60;
+    uint256 MAX_INT_TYPE = type(uint256).max;
 
     function setUp() public {
         // 16/12/2023 : 0am
@@ -107,24 +111,13 @@ contract NameDayTokenTest is Test {
         aliceToken.mint("alice");
     }
 
-    // function testDate() public {
-        
-    // }
-
     function testFuzz_Mint(uint256 currentTimeStamp, uint256 nameDayTimeStamp) public {
-        uint256 DAY_IN_SECONDS = 24 * 60 * 60;
-        uint256 MAX_INT_TYPE = type(uint256).max;
         // We need to make sure that the addition of DAY_IN_SECONDS to nameDayTimeStamp will not overflow
         vm.assume(currentTimeStamp <= MAX_INT_TYPE - DAY_IN_SECONDS);
 
-        console.log("before");
         vm.warp(currentTimeStamp);
-        // vm.warp(115792089237316195423570985008687907853269984665640564039457584007913125369600);
-        console.log("after");
         NameDayToken aliceToken2 = new NameDayToken("AliceToken2", "ALICE2", "alice", nameDayTimeStamp, 100, 1e24);
-        console.log("test0");
         vm.startPrank(alice);
-        console.log("test1");
         if(currentTimeStamp >= nameDayTimeStamp && currentTimeStamp < nameDayTimeStamp+DAY_IN_SECONDS) {
             aliceToken2.mint("alice");
         } else {
@@ -160,6 +153,7 @@ contract NameDayTokenTest is Test {
     function testMintAndTransferFailDate() public {
         vm.startPrank(alice);
         aliceToken.mint("alice");
+
         // 17/12/2023 : 10am
         vm.warp(1702807200);
         vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
@@ -183,7 +177,6 @@ contract NameDayTokenTest is Test {
 
     function testGetBaseYear() public {
         uint256 baseYear = aliceToken.getBaseYear();
-        console.log(baseYear);
         assertEq(baseYear, 2023);
     }
 }
