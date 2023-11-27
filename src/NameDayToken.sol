@@ -92,19 +92,18 @@ contract NameDayToken is ERC20 {
         }
     }
 
-    function _isRightDay() private view returns (bool) {
-        uint256 currentTime = block.timestamp;
-        // save gas if the current time is before the name day
-        if(currentTime < _nameDayTimestamp) {
-            return false;
-        }
-
+    function getNextNameDayTimestamp() public view returns (uint256) {
         uint256 currentYear = DateTime.getYear(block.timestamp);
-        (, uint month, uint day) = DateTime.timestampToDate(_nameDayTimestamp);
-        uint256 nextNameDayTimestamp = DateTime.timestampFromDate(currentYear, month, day);
- 
-        // nextNameDayTimestamp + DAY_IN_SECONDS can overflow if the nextNameDayTimestamp is > MAX_INT - DAY_IN_SECONDS
-        return (currentTime >= nextNameDayTimestamp && currentTime < nextNameDayTimestamp + DAY_IN_SECONDS);
+        (, uint month, uint day, uint hour, uint minute, uint second) = DateTime.timestampToDateTime
+        (_nameDayTimestamp);
+        return DateTime.timestampFromDateTime(currentYear, month, day, hour, minute, second);
+    }
+
+    function _isRightDay() private view returns (bool) {
+        uint256 nextNameDayTimestamp = getNextNameDayTimestamp();
+        
+        // nextNameDayTimestamp + DAY_IN_SECONDS can overflow if the nextNameDayTimestamp it's > MAX_INT
+        return (block.timestamp >= nextNameDayTimestamp && block.timestamp < nextNameDayTimestamp + DAY_IN_SECONDS);
     }
 
     function _isMaxSupplyReach(uint256 amount) private view returns (bool) {
