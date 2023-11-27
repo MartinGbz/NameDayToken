@@ -65,7 +65,15 @@ contract NameDayTokenTest is Test {
         aliceToken2.mint("alicecooper");
     }
 
-    function testMintFailDate() public {
+    function testMintFailDateBefore() public {
+        // 1 day before : 15/12/2023
+        vm.warp(1702636498);
+        vm.startPrank(alice);
+        vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
+        aliceToken.mint("alice");
+    }
+
+    function testMintFailDateAfter() public {
         // 1 day later : 17/12/2023
         vm.warp(1702771200);
         vm.startPrank(alice);
@@ -98,6 +106,15 @@ contract NameDayTokenTest is Test {
         vm.startPrank(alice);
         aliceToken.mint("alice");
     }
+
+    // function testMintFailDateBefore() public {
+    //     // 1 day before : 15/12/2023
+    //     NameDayToken aliceToken = new NameDayToken("AliceToken", "ALICE", "alice", 1702684800, 100, 1e24);
+    //     vm.warp(1702636498);
+    //     vm.startPrank(alice);
+    //     vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
+    //     aliceToken.mint("alice");
+    // }
 
     /*---------- TRANSFERT TESTS ----------*/
 
@@ -144,4 +161,17 @@ contract NameDayTokenTest is Test {
         vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
         aliceToken.transferFrom(alice, martingbz, 50);
     }
+
+    /*---------- GET FUNCTION TESTS ----------*/
+
+    // function testGetBaseYear() public {
+    //     uint16 baseYear = aliceToken.getBaseYear();
+    //     console.log(baseYear);
+    //     assertEq(baseYear, 2023);
+    // }
+
+    // function testGetCurrentYear() public {
+    //     uint16 currentYear = aliceToken._getCurrentYear();
+    //     assertEq(currentYear, 2023);
+    // }
 }

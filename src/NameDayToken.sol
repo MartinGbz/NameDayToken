@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@arachnid/contracts/strings.sol";
+import "forge-std/console.sol";
 
 abstract contract ENS {
     function resolver(bytes32 node) public virtual view returns (Resolver);
@@ -17,20 +18,21 @@ contract NameDayToken is ERC20 {
     using strings for *;
     
     string private _dayName;
-    uint256 private _nameDayTimestamp; // Timestamp for 20th January 2023, 00:00:00 UTC
+    uint256 private _nameDayTimestamp;
     uint256 private _mintPerUserPerYear;
     uint256 private _maxSupply;
-    uint256 private constant BASE_YEAR = 0;
+    uint16 private _baseYear;
     uint256 private constant YEAR_IN_SECONDS = 31536000; // Number of seconds in a year (365 days)
     uint256 private constant DAY_IN_SECONDS = 86400; // Number of seconds in a day (24 hours)
 
-    mapping(uint256 => mapping(string => bool)) private _minted;
+    mapping(uint16 => mapping(string => bool)) private _minted;
 
     constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
         _nameDayTimestamp = nameDayTimestamp_;
         _mintPerUserPerYear = mintPerUserPerYear_;
         _dayName = dayName_;
         _maxSupply = maxSupply_;
+        _baseYear = _getCurrentYear();
     }
 
     function dayName() public view virtual returns (string memory) {
@@ -48,6 +50,22 @@ contract NameDayToken is ERC20 {
     function maxSupply() public view virtual returns (uint256) {
         return _maxSupply;
     }
+
+    function getBaseYear() public view virtual returns (uint16) {
+        return _baseYear;
+    }
+
+    function _getCurrentYear() private view returns (uint16) {
+        console.log(block.timestamp);
+        console.log(_nameDayTimestamp);
+        console.log(YEAR_IN_SECONDS);
+        console.log(uint16((block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS));
+        return uint16((block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS);
+    }
+
+    // function _getCurrentYear() private view returns (uint16) {
+    //     return uint16((block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS);
+    // }
 
     // Same address for Mainnet, Ropsten, Rinkerby, Gorli and other networks;
     ENS ens = ENS(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
@@ -69,11 +87,6 @@ contract NameDayToken is ERC20 {
         namehash = keccak256(
         abi.encodePacked(namehash, keccak256(abi.encodePacked(name_)))
         );
-    }
-
-    function _getCurrentYear() private view returns (uint256) {
-        uint256 yearsPassed = (block.timestamp - _nameDayTimestamp) / YEAR_IN_SECONDS;
-        return BASE_YEAR + yearsPassed;
     }
 
     function _isUserAllowed (string memory ensName) private view returns (bool) {
@@ -105,16 +118,22 @@ contract NameDayToken is ERC20 {
 
     function _isRightDay() private view returns (bool) {
         uint256 currentTime = block.timestamp;
-        uint256 yearsPassed = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
-        // if not in date => nextDayTimestamp=_nameDayTimestamp
-        // if in date => nextDayTimestamp=_nameDayTimestamp+yearsPassed*YEAR_IN_SECONDS
-        uint256 nextDayTimestamp = _nameDayTimestamp + yearsPassed * YEAR_IN_SECONDS;
+        if(currentTime < _nameDayTimestamp) {
+            return false;
+        }
+        // uint256 currentYear = (currentTime - _nameDayTimestamp) / YEAR_IN_SECONDS;
+        uint16 currentYear = _getCurrentYear();
+        uint256 nextDayTimestamp = _nameDayTimestamp + currentYear * YEAR_IN_SECONDS;
+        // uint256 currentYear = _baseYear + yearsPassed;
 
-        uint256 currentYear = BASE_YEAR + yearsPassed;
+        // console.logUint(currentTime);
+        // console.logUint(yearsPassed);
+        // console.logUint(nextDayTimestamp);
+        // console.logUint(currentYear);
 
         // add leap days
         // doesn't take into account the current year because it's not finished yet
-        for (uint256 i = BASE_YEAR; i < currentYear; i++) {
+        for (uint16 i = _baseYear; i < currentYear; i++) {
             if (isLeap(i)) {
                 nextDayTimestamp += DAY_IN_SECONDS;
             }
