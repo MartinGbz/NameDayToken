@@ -179,4 +179,13 @@ contract NameDayTokenTest is Test {
         uint256 baseYear = aliceToken.getBaseYear();
         assertEq(baseYear, 2023);
     }
+
+    function testGetCurrentYearNameDayTimestamp() public {
+        // 01/02/2024 : 0am
+        vm.warp(1706745600);
+        uint256 timestamp = aliceToken.getCurrentYearNameDayTimestamp();
+
+        // timestamp should be 16/12/2024 : 0am
+        assertEq(timestamp, 1734307200);
+    }
 }
