@@ -107,18 +107,31 @@ contract NameDayTokenTest is Test {
         aliceToken.mint("alice");
     }
 
-    // function testFuzz_Mint(uint256 currentTimeStamp, uint256 nameDayTimeStamp) public {
-    //     uint256 DAY_IN_SECONDS = 24 * 60 * 60;
-    //     vm.warp(currentTimeStamp);
-    //     NameDayToken aliceToken2 = new NameDayToken("AliceToken2", "ALICE2", "alice", nameDayTimeStamp, 100, 1e24);
-    //     vm.startPrank(alice);
-    //     if(currentTimeStamp >= nameDayTimeStamp && currentTimeStamp < nameDayTimeStamp+DAY_IN_SECONDS) {
-    //         aliceToken2.mint("alice");
-    //     } else {
-    //         vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
-    //         aliceToken2.mint("alice");
-    //     }
+    // function testDate() public {
+        
     // }
+
+    function testFuzz_Mint(uint256 currentTimeStamp, uint256 nameDayTimeStamp) public {
+        uint256 DAY_IN_SECONDS = 24 * 60 * 60;
+        uint256 MAX_INT_TYPE = type(uint256).max;
+        // We need to make sure that the addition of DAY_IN_SECONDS to nameDayTimeStamp will not overflow
+        vm.assume(currentTimeStamp <= MAX_INT_TYPE - DAY_IN_SECONDS);
+
+        console.log("before");
+        vm.warp(currentTimeStamp);
+        // vm.warp(115792089237316195423570985008687907853269984665640564039457584007913125369600);
+        console.log("after");
+        NameDayToken aliceToken2 = new NameDayToken("AliceToken2", "ALICE2", "alice", nameDayTimeStamp, 100, 1e24);
+        console.log("test0");
+        vm.startPrank(alice);
+        console.log("test1");
+        if(currentTimeStamp >= nameDayTimeStamp && currentTimeStamp < nameDayTimeStamp+DAY_IN_SECONDS) {
+            aliceToken2.mint("alice");
+        } else {
+            vm.expectRevert(bytes("Transfers are only allowed on alice's day"));
+            aliceToken2.mint("alice");
+        }
+    }
 
     /*---------- TRANSFERT TESTS ----------*/
 
