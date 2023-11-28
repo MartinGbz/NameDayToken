@@ -176,8 +176,8 @@ contract NameDayTokenTest is Test {
     /*---------- GET FUNCTION TESTS ----------*/
 
     function testGetBaseYear() public {
-        uint256 baseYear = aliceToken.getBaseYear();
-        assertEq(baseYear, 2023);
+        uint256 baseTimestamp = aliceToken.getBaseTimestamp();
+        assertEq(baseTimestamp, 1702684800);
     }
 
     function testGetCurrentYearNameDayTimestamp() public {

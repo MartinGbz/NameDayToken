@@ -22,7 +22,7 @@ contract NameDayToken is ERC20 {
     uint256 private _nameDayTimestamp;
     uint256 private _mintPerUserPerYear;
     uint256 private _maxSupply;
-    uint256 private _baseYear;
+    uint256 private _baseTimestamp;
     uint256 private constant DAY_IN_SECONDS = 24 * 60 * 60; // Number of seconds in a day (24 hours)
 
     mapping(uint256 => mapping(string => bool)) private _minted;
@@ -32,7 +32,7 @@ contract NameDayToken is ERC20 {
         _mintPerUserPerYear = mintPerUserPerYear_;
         _dayName = dayName_;
         _maxSupply = maxSupply_;
-        _baseYear = uint256(DateTime.getYear(block.timestamp));
+        _baseTimestamp = block.timestamp;
     }
 
     function dayName() public view virtual returns (string memory) {
@@ -51,8 +51,8 @@ contract NameDayToken is ERC20 {
         return _maxSupply;
     }
 
-    function getBaseYear() public view virtual returns (uint256) {
-        return _baseYear;
+    function getBaseTimestamp() public view virtual returns (uint256) {
+        return _baseTimestamp;
     }
 
     // Same address for Mainnet, Ropsten, Rinkerby, Gorli and other networks;
