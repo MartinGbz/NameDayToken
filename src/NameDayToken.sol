@@ -25,7 +25,7 @@ contract NameDayToken is ERC20 {
     uint256 private _baseTimestamp;
     uint256 private constant DAY_IN_SECONDS = 24 * 60 * 60; // Number of seconds in a day (24 hours)
 
-    mapping(uint256 => mapping(string => bool)) private _minted;
+    mapping(uint256 => mapping(string => bool)) private _mints;
 
     constructor(string memory name_, string memory symbol_, string memory dayName_, uint256 nameDayTimestamp_, uint256 mintPerUserPerYear_, uint256 maxSupply_) ERC20(name_, symbol_) {
         _nameDayTimestamp = nameDayTimestamp_;
@@ -34,6 +34,8 @@ contract NameDayToken is ERC20 {
         _maxSupply = maxSupply_;
         _baseTimestamp = block.timestamp;
     }
+
+    event Mint(uint256 indexed year, string indexed ensName);
 
     function dayName() public view virtual returns (string memory) {
         return _dayName;
@@ -53,6 +55,22 @@ contract NameDayToken is ERC20 {
 
     function getBaseTimestamp() public view virtual returns (uint256) {
         return _baseTimestamp;
+    }
+
+    function hasMinted(uint256 year, string calldata ensName) public view virtual returns (bool) {
+        return _mints[year][ensName];
+    }
+
+    function getUserMints(string calldata ensName) public view virtual returns (bool[] memory) {
+        uint256 currentYear = DateTime.getYear(block.timestamp);
+        uint256 baseYear = DateTime.getYear(_baseTimestamp);
+        bool[] memory mints = new bool[](currentYear - baseYear + 1);
+        uint256 i = 0;
+        for (uint256 year = baseYear; year <= currentYear; year++) {
+            mints[i] = _mints[year][ensName];
+            i++;
+        }
+        return mints;
     }
 
     // Same address for Mainnet, Ropsten, Rinkerby, Gorli and other networks;
@@ -80,7 +98,7 @@ contract NameDayToken is ERC20 {
     function _isUserAllowed (string memory ensName) private view returns (bool) {
         require(!ensName.toSlice().startsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
         require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
-        require(!_minted[DateTime.getYear(block.timestamp)][ensName], "You already minted tokens this year");
+        require(!_mints[DateTime.getYear(block.timestamp)][ensName], "You already minted tokens this year");
 
         bytes32 namehash = computeNamehash(ensName);
         address ensResolved = resolve(namehash);
@@ -126,7 +144,11 @@ contract NameDayToken is ERC20 {
         require(_isMaxSupplyReach(_mintPerUserPerYear), "Max supply reached");
         require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
         require(_isUserAllowed(ensName), "Only the owner of the ENS name can mint tokens");
+        
         _mint(msg.sender, _mintPerUserPerYear);
-        _minted[DateTime.getYear(block.timestamp)][ensName] = true;
+        
+        uint256 currentYear = DateTime.getYear(block.timestamp);
+        _mints[currentYear][ensName] = true;
+        emit Mint(currentYear, ensName);
     }
 }

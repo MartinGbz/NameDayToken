@@ -188,4 +188,55 @@ contract NameDayTokenTest is Test {
         // timestamp should be 16/12/2024 : 0am
         assertEq(timestamp, 1734307200);
     }
+
+    function testHasMinted() public {
+        vm.startPrank(alice);
+        aliceToken.mint("alice");
+        assertEq(aliceToken.hasMinted(2023, "alice"), true);
+        assertEq(aliceToken.hasMinted(2023, "alice1"), false);
+        assertEq(aliceToken.hasMinted(2024, "alice"), false);
+
+        // 16/12/2025 : 0am
+        vm.warp(1765843200);
+        aliceToken.mint("alice");
+        assertEq(aliceToken.hasMinted(2025, "alice"), true);
+        assertEq(aliceToken.hasMinted(2024, "alice"), false);
+    }
+
+
+    function testGetUserMints() public {
+        vm.startPrank(alice);
+        
+        aliceToken.mint("alice");
+        
+        // 16/12/2025 : 0am
+        vm.warp(1765843200);
+        aliceToken.mint("alice");
+        
+        // 16/12/2026 : 0am
+        vm.warp(1797379200);
+        aliceToken.mint("alice");
+
+        bool[] memory mints = aliceToken.getUserMints("alice");
+        assertTrue(
+            mints[0] == true &&
+            mints[1] == false &&
+            mints[2] == true &&
+            mints[3] == true,
+            "mints should be [true, false, true, true]"
+        );
+    }
+
+    /*---------- EVENTS TESTS ----------*/
+
+    event Mint(uint256 indexed year, string indexed ensName);
+
+    function testMintEvent() public {
+        vm.startPrank(alice);
+
+        vm.expectEmit(true, true, false, false);
+        emit Mint(2023, "alice");
+
+        aliceToken.mint("alice");
+    }
 }
