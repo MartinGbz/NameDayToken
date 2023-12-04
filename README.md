@@ -46,4 +46,4 @@ I use "martinToken" as example in the tests because I ([0xMartinGbz](https://twi
 
 # Disclaimers
 
-The project was created for learning purposes.
+The project has been created for learning purposes only.
