@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
@@ -56,13 +56,6 @@ contract NameDayTokenTest is Test {
         vm.startPrank(martin2);
         martinToken.mint("martin2");
     }
-
-    // // at the time of the test (17/11/2023) alice1.eth has no resolving address on ethereum mainnet
-    // function testMintFailNoResolvingAddress() public {
-    //     vm.startPrank(alice1);
-    //     vm.expectRevert(bytes("Resolver has not been found"));
-    //     aliceToken.mint("alice1");
-    // }
     
     function testMintFailNoETHRecordAddress() public {
         vm.startPrank(martin1);
