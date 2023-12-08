@@ -1,6 +1,6 @@
 <div align="center"> 
   <h1> NameDayToken 📅 </h1>
-  <p>The ERC-20 token mintable only during its name day and by the owners of the name</p>
+  <p>The ERC-20 token mintable only during its name day and by the name owners</p>
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/0xMartinGbz?style=social)](https://twitter.com/0xMartinGbz)
 
@@ -8,10 +8,7 @@
 
 # Abstract
 
-The NameDayToken contract allow to create ERC-20 tokens that are only:
-
-- mintable by addresses which have an ENS name containing a specific name
-- mintable/transferable during the name day
+The NameDayToken is an ERC-20 contract mintable by addresses with specific ENS names and transferable only during the specific name day.
 
 Example: You setup an Alice token that is mintable by all \*alice\*.eth holders and only transferable during Alice's day (16/12 of each year).
 
