@@ -179,8 +179,13 @@ contract NameDayTokenTest is Test {
     /*---------- GET FUNCTION TESTS ----------*/
 
     function testGetBaseYear() public {
-        uint256 baseTimestamp = martinToken.getBaseTimestamp();
+        uint256 baseTimestamp = martinToken.baseTimestamp();
         assertEq(baseTimestamp, 1699660800);
+    }
+
+    function testGetDayName() public {
+        string memory dayName = martinToken.dayName();
+        assertEq(dayName, "martin");
     }
 
     function testGetCurrentYearNameDayTimestamp() public {

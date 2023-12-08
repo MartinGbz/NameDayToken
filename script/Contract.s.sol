@@ -11,7 +11,7 @@ contract ContractScript is Script {
 
     function run() public {
         vm.startBroadcast();
-        martinToken = new NameDayToken("MartinToken", "MARTIN", "martin", 1701171000, 1e20, 1e23);
+        martinToken = new NameDayToken("MartinToken", "MARTIN", "martin", 1701900000, 1e20, 1e23);
         vm.stopBroadcast();
     }
 }
