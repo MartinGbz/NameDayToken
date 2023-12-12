@@ -1,5 +1,5 @@
 <div align="center"> 
-  <h1> NameDayToken 📅 </h1>
+  <h1> NameDayToken 🥳 </h1>
   <p>The ERC-20 token mintable only during its name day and by the name owners</p>
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/0xMartinGbz?style=social)](https://twitter.com/0xMartinGbz)
