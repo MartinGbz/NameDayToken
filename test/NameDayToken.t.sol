@@ -2,8 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/NameDayToken.sol";
 import "forge-std/console.sol";
+
+import "../src/NameDayToken.sol";
+import "../src/NameDayTokenFactory.sol";
 
 /**
     ALL TESTS NEED TO BE RUN WITH USING SEPOLIA TESTNET
@@ -15,9 +17,11 @@ import "forge-std/console.sol";
  */
 
 contract NameDayTokenTest is Test {
+    NameDayTokenFactory public factory;
     NameDayToken public martinToken;
+    address public martinTokenAddress;
 
-    address martin = address(0x4801eB5a2A6E2D04F019098364878c70a05158F1);
+    address public martin = address(0x4801eB5a2A6E2D04F019098364878c70a05158F1);
     address martin1 = address(0x4801eB5a2A6E2D04F019098364878c70a05158F1);
     address martin2 = address(0xFa3ED20a82df27DF4b1a01dfb7EFC9b1b0848241);
     address alice2 = address(0xFa3ED20a82df27DF4b1a01dfb7EFC9b1b0848241);
@@ -28,7 +32,9 @@ contract NameDayTokenTest is Test {
     function setUp() public {
         // 11/11/2023 : 0am
         vm.warp(1699660800);
-        martinToken = new NameDayToken("MartinToken", "MARTIN", "martin", 1699660800, 100, 1e24);
+        factory = new NameDayTokenFactory();
+        martinTokenAddress = factory.deployToken("MartinToken", "MARTIN", "martin", 1699660800, 100, 1e24);
+        martinToken = NameDayToken(martinTokenAddress);
     }
 
     function testConstructor() public {
@@ -36,6 +42,41 @@ contract NameDayTokenTest is Test {
         console.log(block.timestamp);
         assertEq(martinToken.name(), "MartinToken");
         assertEq(martinToken.totalSupply(), 0);
+    }
+
+    /*---------- FACTORY TESTS ----------*/
+    function testVerifyTokens() public {
+        // console.logAddress(factory.tokens(0));
+
+        vm.expectRevert();
+        console.logAddress(factory.tokens(1));
+
+        assertEq(factory.tokens(0), martinTokenAddress);
+
+        address martin2TokenAddress = factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
+        assertEq(factory.tokens(0), martinTokenAddress);
+        assertEq(factory.tokens(1), martin2TokenAddress);
+    }
+
+    function testVerifyTokenCount() public {
+        assertEq(factory.tokenCount(), 1);
+        factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
+        assertEq(factory.tokenCount(), 2);
+    }
+
+    // event TokenDeployed(address tokenAddress);
+    event TokenDeployed(address indexed tokenAddress, address indexed deployer);
+
+    function testTokenDeployedEvent() public {
+        vm.startPrank(martin);
+        vm.expectEmit(true, true, false, false);
+        // I know that the address of the token will be 0x037eDa3aDB1198021A9b2e88C22B464fD38db3f3
+        // console.logAddress(address(0x037eDa3aDB1198021A9b2e88C22B464fD38db3f3));
+        // console.logAddress(martin);
+        emit TokenDeployed(address(0x037eDa3aDB1198021A9b2e88C22B464fD38db3f3), martin);
+        factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
+        // console.log("test");
+        // console.logAddress(test);
     }
 
     /*---------- MINT TESTS ----------*/
