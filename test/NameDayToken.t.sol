@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import "../src/NameDayToken.sol";
+import {NameDayToken} from "../src/NameDayToken.sol";
 import "../src/NameDayTokenFactory.sol";
 
 /**
@@ -28,6 +29,10 @@ contract NameDayTokenTest is Test {
 
     uint256 DAY_IN_SECONDS = 24 * 60 * 60;
     uint256 MAX_INT_TYPE = type(uint256).max;
+
+    // error InvalidENSName(string message);
+    // error MaxSupplyReached();
+    // error InvalidDay(string message);
 
     function setUp() public {
         // 11/11/2023 : 0am
@@ -91,7 +96,8 @@ contract NameDayTokenTest is Test {
     
     function testMintFailNoETHRecordAddress() public {
         vm.startPrank(martin1);
-        vm.expectRevert(bytes("Only the owner of the ENS name can mint tokens"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidENSName.selector, "Only the owner of the ENS name can mint tokens"));
+        // vm.expectRevert(bytes("Only the owner of the ENS name can mint tokens"));
         martinToken.mint("martin1");
     }
 
@@ -100,7 +106,8 @@ contract NameDayTokenTest is Test {
         vm.startPrank(martin);
         aliceToken2.mint("martin");
         vm.startPrank(martin2);
-        vm.expectRevert(bytes("Max supply reached"));
+        // vm.expectRevert(bytes("Max supply reached"));
+        vm.expectRevert(NameDayToken.MaxSupplyReached.selector);
         aliceToken2.mint("martin2");
     }
 
@@ -108,7 +115,8 @@ contract NameDayTokenTest is Test {
         // 1 day before : 10/11/2023
         vm.warp(1699574400);
         vm.startPrank(martin);
-        vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidDay.selector, "Transfers are only allowed on martin's day"));
+        // vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
         martinToken.mint("martin");
     }
 
@@ -116,26 +124,30 @@ contract NameDayTokenTest is Test {
         // 1 day later : 12/11/2023
         vm.warp(1699747200);
         vm.startPrank(martin);
-        vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidDay.selector, "Transfers are only allowed on martin's day"));
+        // vm.expectRevert(NameDayToken.InvalidDay.selector("Transfers are only allowed on martin's day"));
+        // vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
         martinToken.mint("martin");
     }
 
     function testMintFailUserNotAllowed() public {
         vm.startPrank(alice2);
-        vm.expectRevert(bytes("Only an owner of an ENS name that contains martin can mint tokens"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidENSName.selector, "Only an owner of an ENS name that contains martin can mint tokens"));
+        // vm.expectRevert(bytes("Only an owner of an ENS name that contains martin can mint tokens"));
         martinToken.mint("alice2");
     }
 
     function testMintFailImpersonate() public {
         vm.startPrank(alice2);
-        vm.expectRevert(bytes("Only the owner of the ENS name can mint tokens"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidENSName.selector, "Only the owner of the ENS name can mint tokens"));
+        // vm.expectRevert(bytes("Only the owner of the ENS name can mint tokens"));
         martinToken.mint("martin");
     }
 
     function testDoubleMintInADay() public {
         vm.startPrank(martin);
         martinToken.mint("martin");
-        vm.expectRevert(bytes("You already minted tokens this year"));
+        vm.expectRevert(bytes("This ENS already minted tokens this year"));
         martinToken.mint("martin");
     }
 
@@ -156,7 +168,8 @@ contract NameDayTokenTest is Test {
         if(currentTimeStamp >= nameDayTimeStamp && currentTimeStamp < nameDayTimeStamp+DAY_IN_SECONDS) {
             martinToken2.mint("martin");
         } else {
-            vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+            vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidDay.selector, "Transfers are only allowed on martin's day"));
+            // vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
             martinToken2.mint("martin");
         }
     }
@@ -191,7 +204,8 @@ contract NameDayTokenTest is Test {
 
         // 1 day later: 12/11/2023 : 10am
         vm.warp(1699783200);
-        vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+        // vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidDay.selector, "Transfers are only allowed on martin's day"));
         martinToken.transfer(alice2, 50);
     }
 
@@ -204,7 +218,8 @@ contract NameDayTokenTest is Test {
         martinToken.approve(alice2, 50); // should not revert
 
         vm.startPrank(alice2);
-        vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+        // vm.expectRevert(bytes("Transfers are only allowed on martin's day"));
+        vm.expectRevert(abi.encodeWithSelector(NameDayToken.InvalidDay.selector, "Transfers are only allowed on martin's day"));
         martinToken.transferFrom(martin, alice2, 50);
     }
 
