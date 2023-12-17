@@ -46,11 +46,6 @@ contract NameDayTokenTest is Test {
 
     /*---------- FACTORY TESTS ----------*/
     function testVerifyTokens() public {
-        // console.logAddress(factory.tokens(0));
-
-        vm.expectRevert();
-        console.logAddress(factory.tokens(1));
-
         assertEq(factory.tokens(0), martinTokenAddress);
 
         address martin2TokenAddress = factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
@@ -71,12 +66,8 @@ contract NameDayTokenTest is Test {
         vm.startPrank(martin);
         vm.expectEmit(true, true, false, false);
         // I know that the address of the token will be 0x037eDa3aDB1198021A9b2e88C22B464fD38db3f3
-        // console.logAddress(address(0x037eDa3aDB1198021A9b2e88C22B464fD38db3f3));
-        // console.logAddress(martin);
         emit TokenDeployed(address(0x037eDa3aDB1198021A9b2e88C22B464fD38db3f3), martin);
         factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
-        // console.log("test");
-        // console.logAddress(test);
     }
 
     /*---------- MINT TESTS ----------*/
