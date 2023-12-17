@@ -55,11 +55,9 @@ contract NameDayToken is ERC20 {
         if(_isMaxSupplyReached(value)) {
             revert MaxSupplyReached();
         }
-        // require(_isMaxSupplyNotReached(value), "Max supply reached");
         if(!_isRightDay()) {
-            revert InvalidDay("Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+            revert InvalidDay(getInvalidDayMessage());
         }
-        // require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
         return super.transfer(to, value);
     }
 
@@ -67,11 +65,9 @@ contract NameDayToken is ERC20 {
         if(_isMaxSupplyReached(value)) {
             revert MaxSupplyReached();
         }
-        // require(_isMaxSupplyNotReached(value), "Max supply reached");
         if(!_isRightDay()) {
-            revert InvalidDay("Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+            revert InvalidDay(getInvalidDayMessage());
         }
-        // require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
         return super.transferFrom(from, to, value);
     }
 
@@ -79,15 +75,12 @@ contract NameDayToken is ERC20 {
         if(_isMaxSupplyReached(mintPerUserPerYear)) {
             revert MaxSupplyReached();
         }
-        // require(_isMaxSupplyNotReached(mintPerUserPerYear), "Max supply reached");
         if(!_isRightDay()) {
-            revert InvalidDay("Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
+            revert InvalidDay(getInvalidDayMessage());
         }
-        // require(_isRightDay(), "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice()));
         if(!_isUserAllowed(ensName)) {
             revert InvalidENSName("Only the owner of the ENS name can mint tokens");
         }
-        // require(_isUserAllowed(ensName), "Only the owner of the ENS name can mint tokens");
         
         uint256 currentYear = DateTime.getYear(block.timestamp);
         _mints[currentYear][ensName] = true;
@@ -121,11 +114,9 @@ contract NameDayToken is ERC20 {
         if(ensName.toSlice().endsWith(".eth".toSlice())) {
             revert InvalidENSName("ENS name not valid. Please remove the .eth extension");
         }
-        // require(!ensName.toSlice().startsWith(".eth".toSlice()), "ENS name not valid. Please remove the .eth extension");
         if(!ensName.toSlice().contains(_dayName.toSlice())) {
             revert InvalidENSName("Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
         }
-        // require(ensName.toSlice().contains(_dayName.toSlice()), "Only an owner of an ENS name that contains ".toSlice().concat(_dayName.toSlice()).toSlice().concat(" can mint tokens".toSlice()));
         require(!_mints[DateTime.getYear(block.timestamp)][ensName], "This ENS already minted tokens this year");
 
         bytes32 namehash = _computeNamehash(ensName);
@@ -147,6 +138,10 @@ contract NameDayToken is ERC20 {
 
     function _isMaxSupplyReached(uint256 amount) private view returns (bool) {
         return !(totalSupply() + amount <= maxSupply);
+    }
+
+    function getInvalidDayMessage() private view returns (string memory) {
+        return "Transfers are only allowed on ".toSlice().concat(_dayName.toSlice()).toSlice().concat("'s day".toSlice());
     }
 
     function _resolve(bytes32 node) private view returns(address) {
