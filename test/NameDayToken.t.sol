@@ -45,12 +45,19 @@ contract NameDayTokenTest is Test {
     }
 
     /*---------- FACTORY TESTS ----------*/
-    function testVerifyTokens() public {
+    function testDeployToken() public {
         assertEq(factory.tokens(0), martinTokenAddress);
 
         address martin2TokenAddress = factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
         assertEq(factory.tokens(0), martinTokenAddress);
         assertEq(factory.tokens(1), martin2TokenAddress);
+    }
+
+    function testDeploy2Tokens() public {
+        address martin2TokenAddress = factory.deployToken("MartinToken2", "MARTIN2", "martin", 1699660800, 100, 1e24);
+        address martin3TokenAddress = factory.deployToken("MartinToken3", "MARTIN3", "martin", 1699660800, 100, 1e24);
+        assertEq(factory.tokens(1), martin2TokenAddress);
+        assertEq(factory.tokens(2), martin3TokenAddress);
     }
 
     function testVerifyTokenCount() public {
